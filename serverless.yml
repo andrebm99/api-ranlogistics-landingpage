@@ -1,0 +1,56 @@
+org: ghosth4ck
+app: landing
+service: ran-logistics-landingpage
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  architecture: x86_64
+  stage: production
+  region: us-east-1
+  profile: ronaldobayonadev
+  memorySize: 2048
+  logRetentionInDays: 1
+  timeout: 15
+
+  environment:
+    TABLE_CONTACT: ${env:TABLE_CONTACT, 'contacto'}
+    TABLE_USUARIOS: ${env:TABLE_USUARIOS, 'usuarios'}
+    TABLA_PUBLICITY: ${env:TABLA_PUBLICITY, 'publicity'}
+    API_KEY: ${env:API_KEY}
+    RECAPTCHA_SECRET_KEY: ${env:RECAPTCHA_SECRET_KEY}
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_EXPIRES: ${env:JWT_EXPIRES, '3d'}
+
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Scan
+            - dynamodb:Query
+          Resource:
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/contacto'
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/contacto/index/*'
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/usuarios'
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/usuarios/index/*'
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/publicity'
+            - 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/publicity/index/*'
+
+functions:
+  api:
+    handler: dist/lambda.handler
+    events:
+      - httpApi:
+          method: any
+          path: /{proxy+}
+
+plugins:
+  - serverless-jetpack
+  - serverless-offline
